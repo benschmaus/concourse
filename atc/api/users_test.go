@@ -13,6 +13,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"fmt"
 )
 
 var _ = Describe("Users API", func() {
@@ -93,12 +94,14 @@ var _ = Describe("Users API", func() {
 				})
 
 				Context("having users", func() {
+					var loginDate time.Time
 					BeforeEach(func() {
 						user1 := new(dbfakes.FakeUser)
 						user1.IDReturns(6)
 						user1.NameReturns("bob")
 						user1.ConnectorReturns("github")
-						user1.LastLoginReturns(time.Unix(10, 0))
+						loginDate = time.Unix(10, 0)
+						user1.LastLoginReturns(loginDate)
 
 						dbUserFactory.GetAllUsersReturns([]db.User{user1}, nil)
 					})
@@ -107,12 +110,12 @@ var _ = Describe("Users API", func() {
 						body, err := ioutil.ReadAll(response.Body)
 						Expect(err).NotTo(HaveOccurred())
 
-						Expect(body).To(MatchJSON(`[{
+						Expect(body).To(MatchJSON(fmt.Sprintf(`[{
 							"id": 6,
 							"username": "bob",
 							"connector": "github",
-							"last_login": "1969-12-31T19:00:10-05:00"
-						}]`))
+							"last_login": "%s"
+						}]`, loginDate.Format(time.RFC3339))))
 					})
 
 				})
@@ -152,6 +155,7 @@ var _ = Describe("Users API", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 		Context("with correct date format", func() {
+			var loginDate time.Time
 			BeforeEach(func() {
 				date = "1969-12-30"
 
@@ -159,19 +163,20 @@ var _ = Describe("Users API", func() {
 				user1.IDReturns(6)
 				user1.NameReturns("bob")
 				user1.ConnectorReturns("github")
-				user1.LastLoginReturns(time.Unix(10, 0))
+				loginDate = time.Unix(10, 0)
+				user1.LastLoginReturns(loginDate)
 				dbUserFactory.GetAllUsersByLoginDateReturns([]db.User{user1}, nil)
 			})
 			It("returns users", func() {
 				body, err := ioutil.ReadAll(response.Body)
 				Expect(err).NotTo(HaveOccurred())
 
-				Expect(body).To(MatchJSON(`[{
+				Expect(body).To(MatchJSON(fmt.Sprintf(`[{
 						"id": 6,
 						"username": "bob",
 						"connector": "github",
-						"last_login": "1969-12-31T19:00:10-05:00"
-					}]`))
+						"last_login": "%s"
+					}]`, loginDate.Format(time.RFC3339))))
 			})
 		})
 
