@@ -25,7 +25,9 @@ var _ = Describe("User Factory", func() {
 	Context("when user doesn't exist", func() {
 		It("Insert a user with last_login now()", func() {
 			Expect(user.Name()).To(Equal("test"))
-			Expect(user.LastLogin().Truncate(1 * time.Minute).String()).To(Equal(time.Now().Truncate(1 * time.Minute).String()))
+			duration, err := time.ParseDuration("20s")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(user.LastLogin()).Should(BeTemporally("~", time.Now(), duration))
 		})
 	})
 

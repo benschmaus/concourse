@@ -1,6 +1,7 @@
 package db
 
 import (
+	sq "github.com/Masterminds/squirrel"
 	"time"
 )
 
@@ -72,7 +73,7 @@ func (f *userFactory) GetAllUsers() ([]User, error) {
 func (f *userFactory) GetAllUsersByLoginDate(lastLogin time.Time) ([]User, error) {
 	rows, err := psql.Select("id", "username", "connector", "last_login").
 		From("users").
-		Where("last_login >= ?", lastLogin).
+		Where(sq.GtOrEq{"last_login": lastLogin}).
 		RunWith(f.conn).
 		Query()
 
