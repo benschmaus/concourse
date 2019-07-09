@@ -215,6 +215,7 @@ var _ = Describe("APIAuthWrappa", func() {
 				atc.GetLogLevel:  authenticatedAndAdmin(inputHandlers[atc.GetLogLevel]),
 				atc.SetLogLevel:  authenticatedAndAdmin(inputHandlers[atc.SetLogLevel]),
 				atc.GetInfoCreds: authenticatedAndAdmin(inputHandlers[atc.GetInfoCreds]),
+				atc.ListActiveUsersSince: authenticatedAndAdmin(inputHandlers[atc.ListActiveUsersSince]),
 
 				// authorized (requested team matches resource team)
 				atc.CheckResource:           authorized(inputHandlers[atc.CheckResource]),
