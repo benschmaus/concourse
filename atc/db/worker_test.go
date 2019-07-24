@@ -235,14 +235,15 @@ var _ = Describe("Worker", func() {
 			otherWorker, err = workerFactory.SaveWorker(atcWorker2, 5*time.Minute)
 			Expect(err).NotTo(HaveOccurred())
 
-			resourceConfig, err := resourceConfigFactory.FindOrCreateResourceConfig(
-				"some-resource-type",
-				atc.Source{"some": "source"},
+			resourceConfigScope, err := defaultResource.SetResourceConfig(
+				atc.Source{
+					"some": "source",
+				},
 				atc.VersionedResourceTypes{},
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			containerOwner = NewResourceConfigCheckSessionContainerOwner(resourceConfig, expiries)
+			containerOwner = NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries)
 		})
 
 		JustBeforeEach(func() {

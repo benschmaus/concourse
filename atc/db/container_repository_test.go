@@ -16,8 +16,8 @@ var _ = Describe("ContainerRepository", func() {
 	Describe("FindOrphanedContainers", func() {
 		Describe("check containers", func() {
 			var (
-				creatingContainer db.CreatingContainer
-				resourceConfig    db.ResourceConfig
+				creatingContainer   db.CreatingContainer
+				resourceConfigScope db.ResourceConfigScope
 			)
 
 			expiries := db.ContainerOwnerExpiries{
@@ -27,14 +27,16 @@ var _ = Describe("ContainerRepository", func() {
 
 			BeforeEach(func() {
 				var err error
-				resourceConfig, err = resourceConfigFactory.FindOrCreateResourceConfig(
-					"some-base-resource-type",
-					atc.Source{"some": "source"},
+
+				resourceConfigScope, err = defaultResource.SetResourceConfig(
+					atc.Source{
+						"some": "source",
+					},
 					atc.VersionedResourceTypes{},
 				)
-				Expect(err).NotTo(HaveOccurred())
+				Expect(err).ToNot(HaveOccurred())
 
-				creatingContainer, err = defaultWorker.CreateContainer(db.NewResourceConfigCheckSessionContainerOwner(resourceConfig, expiries), fullMetadata)
+				creatingContainer, err = defaultWorker.CreateContainer(db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries), fullMetadata)
 				Expect(err).NotTo(HaveOccurred())
 			})
 
@@ -47,7 +49,7 @@ var _ = Describe("ContainerRepository", func() {
 				BeforeEach(func() {
 					var rccsID int
 					err := psql.Select("id").From("resource_config_check_sessions").
-						Where(sq.Eq{"resource_config_id": resourceConfig.ID()}).RunWith(dbConn).QueryRow().Scan(&rccsID)
+						Where(sq.Eq{"resource_config_scope_id": resourceConfigScope.ID()}).RunWith(dbConn).QueryRow().Scan(&rccsID)
 
 					_, err = psql.Update("resource_config_check_sessions").
 						Set("expires_at", sq.Expr("NOW() - '1 second'::INTERVAL")).
@@ -109,7 +111,7 @@ var _ = Describe("ContainerRepository", func() {
 				BeforeEach(func() {
 					var rccsID int
 					err := psql.Select("id").From("resource_config_check_sessions").
-						Where(sq.Eq{"resource_config_id": resourceConfig.ID()}).RunWith(dbConn).QueryRow().Scan(&rccsID)
+						Where(sq.Eq{"resource_config_scope_id": resourceConfigScope.ID()}).RunWith(dbConn).QueryRow().Scan(&rccsID)
 
 					_, err = psql.Update("resource_config_check_sessions").
 						Set("expires_at", sq.Expr("NOW() + '1 hour'::INTERVAL")).

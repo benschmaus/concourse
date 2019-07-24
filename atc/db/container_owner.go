@@ -125,23 +125,23 @@ func (c buildStepContainerOwner) sqlMap() map[string]interface{} {
 // worker base resource type disappear, or the expiry is reached, the container
 // can be removed.
 func NewResourceConfigCheckSessionContainerOwner(
-	resourceConfig ResourceConfig,
+	resourceConfigScopeID int,
 	expiries ContainerOwnerExpiries,
 ) ContainerOwner {
 	return resourceConfigCheckSessionContainerOwner{
-		resourceConfig: resourceConfig,
-		expiries:       expiries,
+		resourceConfigScopeID: resourceConfigScopeID,
+		expiries:              expiries,
 	}
 }
 
 type resourceConfigCheckSessionContainerOwner struct {
-	resourceConfig ResourceConfig
-	expiries       ContainerOwnerExpiries
+	resourceConfigScopeID int
+	expiries              ContainerOwnerExpiries
 }
 
 type ContainerOwnerExpiries struct {
-	Min       time.Duration
-	Max       time.Duration
+	Min time.Duration
+	Max time.Duration
 }
 
 func (c resourceConfigCheckSessionContainerOwner) Find(conn Conn) (sq.Eq, bool, error) {
@@ -149,7 +149,7 @@ func (c resourceConfigCheckSessionContainerOwner) Find(conn Conn) (sq.Eq, bool, 
 	rows, err := psql.Select("id").
 		From("resource_config_check_sessions").
 		Where(sq.And{
-			sq.Eq{"resource_config_id": c.resourceConfig.ID()},
+			sq.Eq{"resource_config_scope_id": c.resourceConfigScopeID},
 			sq.Expr("expires_at > NOW()"),
 		}).
 		RunWith(conn).
@@ -178,21 +178,6 @@ func (c resourceConfigCheckSessionContainerOwner) Find(conn Conn) (sq.Eq, bool, 
 }
 
 func (c resourceConfigCheckSessionContainerOwner) Create(tx Tx, workerName string) (map[string]interface{}, error) {
-	var wbrtID int
-	err := psql.Select("id").
-		From("worker_base_resource_types").
-		Where(sq.Eq{
-			"worker_name":           workerName,
-			"base_resource_type_id": c.resourceConfig.OriginBaseResourceType().ID,
-		}).
-		Suffix("FOR SHARE").
-		RunWith(tx).
-		QueryRow().
-		Scan(&wbrtID)
-	if err != nil {
-		return nil, err
-	}
-
 	expiryStmt := fmt.Sprintf(
 		"NOW() + LEAST(GREATEST('%d seconds'::interval, NOW() - to_timestamp(max(start_time))), '%d seconds'::interval)",
 		int(c.expiries.Min.Seconds()),
@@ -200,18 +185,16 @@ func (c resourceConfigCheckSessionContainerOwner) Create(tx Tx, workerName strin
 	)
 
 	var rccsID int
-	err = psql.Insert("resource_config_check_sessions").
+	err := psql.Insert("resource_config_check_sessions").
 		SetMap(map[string]interface{}{
-			"resource_config_id":           c.resourceConfig.ID(),
-			"worker_base_resource_type_id": wbrtID,
-			"expires_at":                   sq.Expr("(SELECT " + expiryStmt + " FROM workers)"),
+			"resource_config_scope_id": c.resourceConfigScopeID,
+			"expires_at":               sq.Expr("(SELECT " + expiryStmt + " FROM workers)"),
 		}).
 		Suffix(`
-			ON CONFLICT (resource_config_id, worker_base_resource_type_id) DO UPDATE SET
-				resource_config_id = ?,
-				worker_base_resource_type_id = ?
+			ON CONFLICT (resource_config_scope_id) DO UPDATE SET
+				resource_config_scope_id = ?
 			RETURNING id
-		`, c.resourceConfig.ID(), wbrtID).
+		`, c.resourceConfigScopeID).
 		RunWith(tx).
 		QueryRow().
 		Scan(&rccsID)

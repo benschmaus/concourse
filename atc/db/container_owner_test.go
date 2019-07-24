@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("ContainerOwner", func() {
+var _ = FDescribe("ContainerOwner", func() {
 	Describe("ResourceConfigCheckSessionContainerOwner", func() {
 		var (
 			worker db.Worker
@@ -20,7 +20,7 @@ var _ = Describe("ContainerOwner", func() {
 			ownerExpiries db.ContainerOwnerExpiries
 			found         bool
 
-			resourceConfig db.ResourceConfig
+			resourceConfigScope db.ResourceConfigScope
 		)
 
 		ownerExpiries = db.ContainerOwnerExpiries{
@@ -40,8 +40,7 @@ var _ = Describe("ContainerOwner", func() {
 			worker, err = workerFactory.SaveWorker(workerPayload, 0)
 			Expect(err).NotTo(HaveOccurred())
 
-			resourceConfig, err = resourceConfigFactory.FindOrCreateResourceConfig(
-				defaultWorkerResourceType.Type,
+			resourceConfigScope, err = defaultResource.SetResourceConfig(
 				atc.Source{
 					"some-type": "source",
 				},
@@ -52,7 +51,7 @@ var _ = Describe("ContainerOwner", func() {
 
 		JustBeforeEach(func() {
 			owner = db.NewResourceConfigCheckSessionContainerOwner(
-				resourceConfig,
+				resourceConfigScope.ID(),
 				ownerExpiries,
 			)
 		})
@@ -71,7 +70,7 @@ var _ = Describe("ContainerOwner", func() {
 
 				BeforeEach(func() {
 					existingOwner := db.NewResourceConfigCheckSessionContainerOwner(
-						resourceConfig,
+						resourceConfigScope.ID(),
 						ownerExpiries,
 					)
 
@@ -97,7 +96,7 @@ var _ = Describe("ContainerOwner", func() {
 
 				BeforeEach(func() {
 					existingOwner := db.NewResourceConfigCheckSessionContainerOwner(
-						resourceConfig,
+						resourceConfigScope.ID(),
 						ownerExpiries,
 					)
 

@@ -439,7 +439,7 @@ var _ = Describe("Team", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				resourceContainer, err = defaultWorker.CreateContainer(
-					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 					db.ContainerMetadata{},
 				)
 				Expect(err).ToNot(HaveOccurred())
@@ -485,7 +485,7 @@ var _ = Describe("Team", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				resourceContainer, err = worker.CreateContainer(
-					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 					db.ContainerMetadata{
 						Type: "check",
 					},
@@ -563,7 +563,7 @@ var _ = Describe("Team", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					resource2Container, err = worker.CreateContainer(
-						db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+						db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 						db.ContainerMetadata{
 							Type: "check",
 						},
@@ -595,7 +595,7 @@ var _ = Describe("Team", func() {
 					Expect(err).ToNot(HaveOccurred())
 
 					globalResourceContainer, err = defaultWorker.CreateContainer(
-						db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+						db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 						db.ContainerMetadata{
 							Type: "check",
 						},
@@ -626,7 +626,7 @@ var _ = Describe("Team", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				resourceContainer, err = defaultWorker.CreateContainer(
-					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 					db.ContainerMetadata{
 						Type: "check",
 					},
@@ -2593,21 +2593,19 @@ var _ = Describe("Team", func() {
 			Context("when resource exists", func() {
 				Context("when check container for resource exists", func() {
 					var resourceContainer db.CreatingContainer
-					var resourceConfig db.ResourceConfig
 
 					BeforeEach(func() {
 						pipelineResourceTypes, err := defaultPipeline.ResourceTypes()
 						Expect(err).ToNot(HaveOccurred())
 
-						resourceConfig, err = resourceConfigFactory.FindOrCreateResourceConfig(
-							defaultResource.Type(),
+						resourceConfigScope, err := defaultResource.SetResourceConfig(
 							defaultResource.Source(),
 							pipelineResourceTypes.Deserialize(),
 						)
 						Expect(err).ToNot(HaveOccurred())
 
 						resourceContainer, err = defaultWorker.CreateContainer(
-							db.NewResourceConfigCheckSessionContainerOwner(resourceConfig, expiries),
+							db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 							db.ContainerMetadata{},
 						)
 						Expect(err).ToNot(HaveOccurred())
@@ -2649,15 +2647,14 @@ var _ = Describe("Team", func() {
 							Expect(err).NotTo(HaveOccurred())
 							Expect(found).To(BeTrue())
 
-							resourceConfig, err = resourceConfigFactory.FindOrCreateResourceConfig(
-								otherResource.Type(),
+							resourceConfigScope, err := defaultResource.SetResourceConfig(
 								otherResource.Source(),
 								atc.VersionedResourceTypes{},
 							)
 							Expect(err).ToNot(HaveOccurred())
 
 							otherResourceContainer, _, err = defaultWorker.FindContainer(
-								db.NewResourceConfigCheckSessionContainerOwner(resourceConfig, expiries),
+								db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 							)
 							Expect(err).ToNot(HaveOccurred())
 						})
@@ -2720,7 +2717,7 @@ var _ = Describe("Team", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				resourceContainer, err = defaultWorker.CreateContainer(
-					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), expiries),
+					db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), expiries),
 					db.ContainerMetadata{},
 				)
 				Expect(err).ToNot(HaveOccurred())

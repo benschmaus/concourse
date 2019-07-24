@@ -172,8 +172,8 @@ var _ = Describe("ResourceCacheLifecycle", func() {
 
 			BeforeEach(func() {
 				var err error
-				resourceConfig, err := resourceConfigFactory.FindOrCreateResourceConfig(
-					"some-base-resource-type",
+
+				resourceConfigScope, err := defaultResource.SetResourceConfig(
 					atc.Source{
 						"some": "source",
 					},
@@ -181,7 +181,7 @@ var _ = Describe("ResourceCacheLifecycle", func() {
 				)
 				Expect(err).ToNot(HaveOccurred())
 
-				containerOwner = db.NewResourceConfigCheckSessionContainerOwner(resourceConfig, db.ContainerOwnerExpiries{})
+				containerOwner = db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), db.ContainerOwnerExpiries{})
 
 				container, err = defaultWorker.CreateContainer(containerOwner, db.ContainerMetadata{})
 				Expect(err).ToNot(HaveOccurred())
@@ -297,7 +297,7 @@ var _ = Describe("ResourceCacheLifecycle", func() {
 				)
 				Expect(err).ToNot(HaveOccurred())
 
-				containerOwner := db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ResourceConfig(), db.ContainerOwnerExpiries{})
+				containerOwner := db.NewResourceConfigCheckSessionContainerOwner(resourceConfigScope.ID(), db.ContainerOwnerExpiries{})
 
 				container, err := defaultWorker.CreateContainer(containerOwner, db.ContainerMetadata{})
 				Expect(err).ToNot(HaveOccurred())
