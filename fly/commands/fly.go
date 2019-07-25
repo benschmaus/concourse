@@ -21,6 +21,7 @@ type FlyCommand struct {
 	Status StatusCommand `command:"status" description:"Login status"`
 	Sync   SyncCommand   `command:"sync"  alias:"s" description:"Download and replace the current fly from the target"`
 
+	Users UsersCommand `command:"users" alias:"u" description:"List the active users"`
 	Userinfo UserinfoCommand `command:"userinfo" description:"User information"`
 
 	Teams       TeamsCommand       `command:"teams" alias:"t" description:"List the configured teams"`
